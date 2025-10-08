@@ -8,7 +8,6 @@ ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-$
 ARG RUNNER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 
 ARG SELF_HOSTED=1
-ARG SENTRY_DSN=https://f4d4653bced2e057c7d10d9726b6f8d8@o567652.ingest.us.sentry.io/4510073605914624
 
 # ---- CLI Build Stage ----
 FROM golang:1.24.2-bullseye AS cli-builder
@@ -24,10 +23,6 @@ FROM ${BUILDER_IMAGE} AS builder
 # Pass the SELF_HOSTED arg as an environment variable
 ARG SELF_HOSTED
 ENV SELF_HOSTED=${SELF_HOSTED}
-
-# Pass through SENTRY_DSN to the build environment
-ARG SENTRY_DSN
-ENV SENTRY_DSN=${SENTRY_DSN}
 
 # install build dependencies
 RUN apt-get update -y && apt-get install -y build-essential git curl \
@@ -106,6 +101,8 @@ FROM ${RUNNER_IMAGE} AS app
 RUN apt-get update -y && \
     apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates curl ssh jq telnet netcat-openbsd htop vim \
     && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+COPY --from=jhaals/yopass:latest /yopass /opt/bin/yopass
 
 # Copy the Sequin CLI from the cli-builder stage
 COPY --from=cli-builder /sequin-cli /usr/local/bin/sequin

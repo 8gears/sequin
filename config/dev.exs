@@ -13,6 +13,9 @@ config :phoenix_live_view,
 
 config :sequin, Sequin.ConsoleLogger, drop_metadata_keys: [:file, :domain, :application]
 
+config :sequin, Sequin.Redis,
+  url: "redis://localhost:6379"
+
 config :sequin, Sequin.Repo,
   username: "postgres",
   password: "postgres",
@@ -109,7 +112,8 @@ config :sequin,
 # Watch static and templates for browser reloading.
 
 # Enable dev routes for dashboard and mailbox
-config :sequin, dev_routes: true, self_hosted: false
+config :sequin, dev_routes: true, self_hosted: true
+
 
 # Do not include metadata nor timestamps in development logs
 
@@ -121,7 +125,7 @@ config :sequin, dev_routes: true, self_hosted: false
 # Enable helpful, but potentially expensive runtime checks
 
 # Disable swoosh api client as it is only required for production adapters.
-config :swoosh, :api_client, false
+# config :swoosh, :api_client, false
 
 if "dev.secret.exs" |> Path.expand(__DIR__) |> File.exists?() do
   import_config "dev.secret.exs"

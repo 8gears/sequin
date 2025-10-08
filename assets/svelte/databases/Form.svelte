@@ -481,7 +481,7 @@ sequin tunnel --ports=[your-local-port]:${form.name}`;
               id="password"
               bind:value={form.password}
             />
-            <button
+            <!-- <button
               type="button"
               class="absolute inset-y-0 right-0 flex items-center pr-3"
               on:click={togglePasswordVisibility}
@@ -491,7 +491,7 @@ sequin tunnel --ports=[your-local-port]:${form.name}`;
               {:else}
                 <Eye class="h-4 w-4 text-gray-400" />
               {/if}
-            </button>
+            </button> -->
           </div>
           {#if databaseErrors.password}
             <p class="text-destructive text-sm">{databaseErrors.password}</p>

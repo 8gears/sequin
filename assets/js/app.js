@@ -22,30 +22,14 @@
 
 import "phoenix_html";
 // Establish Phoenix Socket and LiveView configuration.
-import * as KoalaSDK from "@getkoala/browser";
+// import * as KoalaSDK from "@getkoala/browser";
 import { getHooks } from "live_svelte";
 import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
-import posthog from "posthog-js";
 import { toast } from "svelte-sonner";
 import * as Components from "../svelte/**/*.svelte";
 import topbar from "../vendor/topbar";
 
-let ko;
-
-posthog.init(document.querySelector("body").getAttribute("data-ph-token"), {
-  api_host: "https://d2qm7p9dngzyqg.cloudfront.net",
-  ui_host: "https://us.posthog.com",
-  session_recording: {
-    maskAllInputs: false,
-  },
-});
-
-KoalaSDK.load({
-  project: document.querySelector("body").getAttribute("data-ko-token"),
-}).then((koalaSDK) => {
-  ko = koalaSDK;
-});
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
@@ -79,61 +63,6 @@ window.addEventListener("phx:toast", (event) => {
     case "error":
       toast.error(event.detail.title, attrs);
       break;
-  }
-});
-
-window.addEventListener("phx:ph-identify", (event) => {
-  const {
-    userId,
-    userEmail,
-    userName,
-    accountId,
-    accountName,
-    createdAt,
-    contactEmail,
-    sequinVersion,
-  } = event.detail;
-
-  posthog.identify(userId, {
-    email: userEmail,
-    name: userName,
-    socket_id: liveSocket.getSocket().id,
-    $groups: { account: accountId },
-  });
-
-  posthog.group("account", accountId, {
-    name: accountName,
-    email: contactEmail,
-    sequinVersion: sequinVersion,
-  });
-
-  ko.identify(userEmail, {
-    name: userName,
-    user_id: userId,
-    $account: {
-      account_id: accountId,
-    },
-  });
-
-  Intercom({
-    app_id: "btt358pc",
-    user_id: userId,
-    name: userName,
-    email: userEmail,
-    created_at: createdAt,
-    company: {
-      id: accountId,
-      name: accountName,
-    },
-  });
-});
-
-window.addEventListener("phx:ph-reset", () => {
-  posthog.reset();
-  ko.reset();
-  if (window.Intercom) {
-    window.Intercom("shutdown");
-    window.Intercom("boot", { app_id: "YOUR_APP_ID" });
   }
 });
 

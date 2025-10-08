@@ -197,7 +197,7 @@ defmodule Sequin.YamlLoader do
 
   # account_id is nil here if we are loading directly from the config file
   # if the yml is passed in from the API, we expect the account_id to be passed in as well
-  defp find_or_create_account(nil, config) do
+  def find_or_create_account(nil, config) do
     if self_hosted?() do
       do_find_or_create_account(config)
     else
@@ -205,12 +205,12 @@ defmodule Sequin.YamlLoader do
     end
   end
 
-  defp find_or_create_account(account_id, %{"account" => _}) when not is_nil(account_id) do
+  def find_or_create_account(account_id, %{"account" => _}) when not is_nil(account_id) do
     {:error,
      Error.bad_request(message: "Account configuration only supported when self hosting and using a config file on boot.")}
   end
 
-  defp find_or_create_account(account_id, _config) when not is_nil(account_id) do
+  def find_or_create_account(account_id, _config) when not is_nil(account_id) do
     Accounts.get_account(account_id)
   end
 
@@ -244,36 +244,45 @@ defmodule Sequin.YamlLoader do
   ## Users ##
   ###########
 
-  defp find_or_create_users(account, %{"users" => users}) do
+  def find_or_create_users(account, %{"users" => users}) do
     Logger.info("Creating users: #{inspect(users, pretty: true)}")
 
     Enum.reduce_while(users, {:ok, []}, fn user_attrs, {:ok, acc} ->
       case find_or_create_user(account, user_attrs) do
-        {:ok, user} -> {:cont, {:ok, [user | acc]}}
-        {:error, error} -> {:halt, {:error, error}}
+        {:created, user, _} -> {:cont, {:ok, [user | acc]}}
+        {:updated, user, _} -> {:cont, {:ok, [user | acc]}}
+        other ->
+          {:halt, {:error, {:unexpected_result, other}}}
       end
     end)
   end
 
-  defp find_or_create_users(_account, %{}) do
+  def find_or_create_users(_account, %{}) do
     Logger.info("No users found in config")
     {:ok, []}
   end
 
-  defp find_or_create_user(account, %{"email" => email} = user_attrs) do
+  def find_or_create_user(account, %{"name" => _name, "email" => email} = user_attrs) do
     case Accounts.get_user_by_email(:identity, email) do
-      nil -> create_user(account, user_attrs)
-      user -> {:ok, user}
+      nil ->
+        password = :crypto.strong_rand_bytes(32)
+          |> Base.url_encode64()
+          |> binary_part(0, 32)
+
+        user_params = Map.put(user_attrs, "password", password)
+        {:ok, user} = create_user(account, user_params)
+        { :created, user, password }
+      user -> { :updated, user, user.password }
     end
   end
 
-  defp create_user(account, %{"email" => email, "password" => password}) do
+  defp create_user(account, %{"name" => name, "email" => email, "password" => password}) do
     user_params = %{
+      name: name,
       email: email,
       password: password,
       password_confirmation: password
     }
-
     Accounts.register_user(:identity, user_params, account)
   end
 
@@ -281,7 +290,7 @@ defmodule Sequin.YamlLoader do
   ## Tokens ##
   ############
 
-  defp find_or_create_tokens(account, %{"api_tokens" => tokens}) do
+  def find_or_create_tokens(account, %{"api_tokens" => tokens}) do
     if self_hosted?() do
       do_find_or_create_tokens(account, tokens)
     else
@@ -289,7 +298,7 @@ defmodule Sequin.YamlLoader do
     end
   end
 
-  defp find_or_create_tokens(_, _), do: {:ok, []}
+  def find_or_create_tokens(_, _), do: {:ok, []}
 
   defp do_find_or_create_tokens(account, tokens) do
     Enum.reduce_while(tokens, {:ok, []}, fn tok, {:ok, acc} ->
@@ -300,17 +309,18 @@ defmodule Sequin.YamlLoader do
     end)
   end
 
-  defp find_or_create_token(_account, %{"name" => nil} = _params) do
+  def find_or_create_token(_account, %{"name" => nil} = _params) do
     {:error, Error.validation(summary: "`name` is required on each token.")}
   end
 
-  defp find_or_create_token(account, %{"name" => token_name} = params) do
+  def find_or_create_token(account, %{"name" => token_name} = params) do
     case ApiTokens.get_token_by(account_id: account.id, name: token_name) do
       {:ok, t} ->
         if t.token == params["token"] do
           {:ok, t}
         else
-          {:error, Error.bad_request(message: "Cannot modify existing token: #{token_name}")}
+          # {:error, Error.bad_request(message: "Cannot modify existing token: #{token_name}")}
+          {:ok, t}
         end
 
       {:error, _} ->
@@ -318,11 +328,24 @@ defmodule Sequin.YamlLoader do
     end
   end
 
-  defp find_or_create_token(_, token) do
+  def find_or_create_token(_, token) do
     {:error,
      Error.bad_request(
        message: "Error creating token: `name` required - received params: #{inspect(token, pretty: true)}"
      )}
+  end
+
+  def update_token(account, %{"name" => token_name} = params) do
+    case ApiTokens.get_token_by(account_id: account.id, name: token_name) do
+      {:ok, t} ->
+        Logger.info("Delete token " <> t.id <> " for account " <> account.id)
+        ApiTokens.delete_token_for_account(account.id, t.id)
+        Logger.info("Create new token for account " <> account.id)
+        ApiTokens.create_for_account(account.id, params)
+
+      {:error, _} ->
+        ApiTokens.create_for_account(account.id, params)
+    end
   end
 
   ###############

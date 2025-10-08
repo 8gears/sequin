@@ -89,9 +89,9 @@ defmodule Sequin.MixProject do
       # HTTP and API Clients
       {:finch, "~> 0.13"},
       # TODO Use published version once release 0.5.16 or greater is done
-      # {:req, "~> 0.5"},
-      {:req, github: "wojtekmach/req", ref: "dcb7ddf", override: true},
-      {:swoosh, "~> 1.5"},
+      {:req, "~> 0.5.16"},
+      # {:req, github: "wojtekmach/req", ref: "dcb7ddf", override: true},
+      {:swoosh, "~> 1.19.8"},
 
       # Messaging / PubSub / Queues
       {:gnat, "~> 1.9"},

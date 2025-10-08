@@ -190,6 +190,10 @@ defmodule SequinWeb.Router do
     post("/config/apply", YamlController, :apply)
     post("/config/plan", YamlController, :plan)
     get("/config/export", YamlController, :export)
+
+    post("/user/account", UserAccountController, :create)
+    # resources("/user/account/:id_or_name", UserAccountController, :receive)
+
   end
 
   scope "/" do

@@ -17,7 +17,8 @@ config :ex_aws, http_client: ExAws.Request.Req
 
 config :logger, :console,
   format: {Sequin.ConsoleLogger, :format},
-  metadata: :all
+  metadata: :all,
+  level: :info
 
 config :phoenix, :json_library, Jason
 
@@ -67,10 +68,11 @@ config :sequin, Oban,
      ]}
   ]
 
-config :sequin, Sequin.Mailer, adapter: Swoosh.Adapters.Local
+config :swoosh, Sequin.Mailer, adapter: Swoosh.Adapters.Brevo
+
+config :swoosh, local: false, api_client: Swoosh.ApiClient.Req
 
 config :sequin, Sequin.Redis,
-  url: "redis://localhost:6379",
   reconnect_sleep: to_timeout(second: 5),
   pool_size: 10
 
@@ -86,7 +88,7 @@ config :sequin, Sequin.Repo,
     default: {:fragment, "uuid_generate_v4()"}
   ],
   migration_lock: :pg_advisory_lock,
-  log: false
+  log: :warning
 
 config :sequin, Sequin.Runtime.SlotProducer, batch_flush_interval: 10
 
@@ -139,5 +141,7 @@ config :tailwind,
     # of this file so it overrides the configuration defined above.
     cd: Path.expand("../assets", __DIR__)
   ]
+
+config :sequin, signing_secret: System.get_env("API_SIGNING_SECRET")
 
 import_config "#{config_env()}.exs"

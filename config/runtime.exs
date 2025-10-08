@@ -49,7 +49,7 @@ end
 if config_env() == :test do
   config :logger, level: ConfigParser.log_level(env_vars, :warning)
 else
-  config :logger, level: ConfigParser.log_level(env_vars, :info)
+  config :logger, level: ConfigParser.log_level(env_vars, :debug)
 end
 
 # config/runtime.exs is executed for all environments, including
@@ -163,9 +163,9 @@ if config_env() == :prod and self_hosted do
   end
 
   config :sequin, Sequin.Posthog,
-    req_opts: [base_url: "https://us.i.posthog.com"],
-    api_key: "phc_i9k28nZwjjJG9DzUK0gDGASxXtGNusdI1zdaz9cuA7h",
-    frontend_api_key: "phc_i9k28nZwjjJG9DzUK0gDGASxXtGNusdI1zdaz9cuA7h",
+  #   req_opts: [base_url: "https://us.i.posthog.com"],
+  #   api_key: "phc_i9k28nZwjjJG9DzUK0gDGASxXtGNusdI1zdaz9cuA7h",
+  #   frontend_api_key: "phc_i9k28nZwjjJG9DzUK0gDGASxXtGNusdI1zdaz9cuA7h",
     is_disabled: System.get_env("SEQUIN_TELEMETRY_DISABLED") in ~w(true 1)
 
   config :sequin, Sequin.Repo,
@@ -206,7 +206,7 @@ if config_env() == :prod and self_hosted do
     function_transforms: :enabled
 
   config :sequin, :koala,
-    public_key: "pk_ec2e6140b3d56f5eb1735350eb20e92b8002",
+    # public_key: "pk_ec2e6140b3d56f5eb1735350eb20e92b8002",
     is_disabled: System.get_env("SEQUIN_TELEMETRY_DISABLED") in ~w(true 1)
 
   config :sequin,
@@ -289,13 +289,20 @@ config :sequin, Sequin.Finch,
 
 config :sequin, Sequin.Runtime.SinkPipeline, default_workers_per_sink: default_workers_per_sink
 
+config :sequin, Sequin.Mailer,
+  adapter: Swoosh.Adapters.Brevo,
+  api_key: System.get_env("BREVO_API_KEY")
+
 if config_env() == :prod do
   vault_key = ConfigParser.vault_key(env_vars)
 
   datadog_api_key = get_env.("DATADOG_API_KEY")
   datadog_app_key = get_env.("DATADOG_APP_KEY")
 
-  config :sequin, Sequin.Mailer, adapter: Sequin.Swoosh.Adapters.Loops, api_key: System.get_env("LOOPS_API_KEY")
+  # config :sequin, Sequin.Mailer, adapter: Sequin.Swoosh.Adapters.Loops, api_key: System.get_env("LOOPS_API_KEY")
+
+  config :sequin, local: false, api_client: Swoosh.ApiClient.Req
+
   config :sequin, Sequin.Redis, ConfigParser.redis_config(env_vars)
 
   config :sequin, Sequin.Vault,
@@ -329,4 +336,13 @@ if config_env() == :prod do
       app_key: datadog_app_key,
       default_query: "service:sequin"
     ]
+
+  config :sequin, signing_secret: System.get_env("API_SIGNING_SECRET")
+
+  config :sequin, Sequin.Repo,
+    log: false
 end
+
+config :sentry,
+  dsn: System.get_env("SENTRY_DSN"),
+  release: System.get_env("RELEASE_VERSION")

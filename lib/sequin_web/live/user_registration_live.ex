@@ -7,8 +7,8 @@ defmodule SequinWeb.UserRegistrationLive do
 
   def render(assigns) do
     ~H"""
-    <div class="w-full md:h-[92vh] mx-auto my-auto flex flex-col md:flex-row bg-white rounded-lg shadow-lg">
-      <div class="md:w-1/2 bg-black p-12 text-white flex flex-col max-w-[800px]">
+    <div class="w-full md:h-[92vh] mx-auto my-auto flex flex-col md:flex-row bg-white">
+      <%!-- <div class="md:w-1/2 bg-black p-12 text-white flex flex-col max-w-[800px]">
         <div class="flex justify-between items-center mb-12">
           <.link href="https://sequinstream.com">
             <svg class="h-8" viewBox="0 0 372 115" xmlns="http://www.w3.org/2000/svg">
@@ -37,7 +37,7 @@ defmodule SequinWeb.UserRegistrationLive do
             </p>
           </div>
         </div>
-      </div>
+      </div> --%>
 
       <div class="md:w-1/2 p-12 flex items-center justify-center max-w-lg mx-auto">
         <div class="space-y-6 w-full">

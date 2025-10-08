@@ -1,7 +1,7 @@
 import Config
 
 config :sequin, Sequin.Mailer,
-  adapter: Sequin.Swoosh.Adapters.Loops,
+  adapter: Sequin.Swoosh.Adapters.Brevo,
   api_key: "TODO"
 
 config :sequin, SequinWeb.UserSessionController,

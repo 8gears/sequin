@@ -115,7 +115,7 @@ defmodule SequinWeb.DatabasesLive.Form do
 
   @impl Phoenix.LiveView
   def handle_event("form_updated", %{"form" => form}, socket) do
-    params = decode_params(form)
+    params = decode_params(form, socket)
     socket = put_changesets(socket, params)
 
     pooler_type = detect_pooled_connection(params["database"])
@@ -128,7 +128,7 @@ defmodule SequinWeb.DatabasesLive.Form do
 
   @impl Phoenix.LiveView
   def handle_event("test_connection", %{"form" => form}, socket) do
-    params = decode_params(form)
+    params = decode_params(form, socket)
 
     with :ok <- test_db_conn(params, socket),
          {:ok, major_version} <- Databases.get_pg_major_version(params_to_db(params, socket)) do
@@ -141,7 +141,7 @@ defmodule SequinWeb.DatabasesLive.Form do
 
   @impl Phoenix.LiveView
   def handle_event("convert_pooled_connection", %{"form" => form}, socket) do
-    params = decode_params(form)
+    params = decode_params(form, socket)
     converted_params = convert_pooled_connection(params["database"])
 
     socket = assign(socket, :pooler_type, nil)
@@ -151,7 +151,7 @@ defmodule SequinWeb.DatabasesLive.Form do
 
   @impl Phoenix.LiveView
   def handle_event("form_submitted", %{"form" => form}, socket) do
-    params = decode_params(form)
+    params = decode_params(form, socket)
 
     socket =
       socket
@@ -405,7 +405,7 @@ defmodule SequinWeb.DatabasesLive.Form do
       "hostname" => database.hostname,
       "port" => database.port || 5432,
       "username" => database.username || "postgres",
-      "password" => database.password,
+      "password" => "**********",
       "ssl" => ssl,
       "pool_size" => database.pool_size || 10,
       "publication_name" => database.replication_slot.publication_name || "sequin_pub",
@@ -423,7 +423,7 @@ defmodule SequinWeb.DatabasesLive.Form do
               "database" => primary.database,
               "port" => primary.port || 5432,
               "username" => primary.username || "postgres",
-              "password" => primary.password,
+              "password" => "**********",
               "ssl" => primary.ssl
             }
         end
@@ -441,7 +441,7 @@ defmodule SequinWeb.DatabasesLive.Form do
     end)
   end
 
-  defp decode_params(form) do
+  defp decode_params(form, socket) do
     port =
       case form["port"] do
         nil -> nil
@@ -463,6 +463,9 @@ defmodule SequinWeb.DatabasesLive.Form do
 
     primary = if form["is_replica"], do: form["primary"]
 
+    changed_db_password = Ecto.Changeset.get_change(socket.assigns.changeset, :password)
+    db_password = if is_nil(changed_db_password), do: socket.assigns.database.password, else: form["password"]
+
     %{
       "database" => %{
         "name" => form["name"],
@@ -470,7 +473,7 @@ defmodule SequinWeb.DatabasesLive.Form do
         "port" => port,
         "database" => maybe_trim(form["database"]),
         "username" => maybe_trim(form["username"]),
-        "password" => form["password"],
+        "password" => db_password,
         "ssl" => ssl,
         "pool_size" => pool_size,
         "use_local_tunnel" => form["useLocalTunnel"],

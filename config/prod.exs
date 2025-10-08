@@ -20,10 +20,12 @@ config :sequin,
   release_version: System.get_env("RELEASE_VERSION")
 
 # Configures Swoosh API Client
-config :swoosh, Sequin.Mailer, adapter: Swoosh.Adapters.Sendgrid
+# config :swoosh, Sequin.Mailer, adapter: Swoosh.Adapters.Brevo
 
 # Disable Swoosh Local Memory Storage
-config :swoosh, local: false, api_client: Swoosh.ApiClient.Req
+# config :swoosh, local: false, api_client: Swoosh.ApiClient.Req
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
+config :sequin, Sequin.Redis,
+  url: "redis://redis-valkey:6379"

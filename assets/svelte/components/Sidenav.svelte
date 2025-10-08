@@ -43,8 +43,8 @@
   export let accountList: { id: string; name: string }[];
   export let parent: string;
   export let accountSettingsHasNotification = false;
-  export let sequinVersion: string;
-  export let latestVersion: string;
+  // export let sequinVersion: string;
+  // export let latestVersion: string;
 
   let settingsCommandOpen = false;
   let form = { name: "" };
