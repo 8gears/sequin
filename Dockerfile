@@ -7,7 +7,8 @@ ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-$
 # Ensure Elixir installed on the runtime image for tooling purposes
 ARG RUNNER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 
-ARG SELF_HOSTED=0
+ARG SELF_HOSTED=1
+ARG SENTRY_DSN=https://f4d4653bced2e057c7d10d9726b6f8d8@o567652.ingest.us.sentry.io/4510073605914624
 
 # ---- CLI Build Stage ----
 FROM golang:1.24.2-bullseye AS cli-builder

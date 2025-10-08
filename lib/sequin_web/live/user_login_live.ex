@@ -44,6 +44,8 @@ defmodule SequinWeb.UserLoginLive do
           </:subtitle>
         </.header>
         <div class="mt-6 space-y-4">
+        <%= if @github_disabled do %>
+        <% else %>
           <.link href={if @github_disabled, do: "#", else: "/auth/github"}>
             <.button
               class="w-full flex items-center justify-center gap-2 mb-10 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -74,6 +76,7 @@ defmodule SequinWeb.UserLoginLive do
               <span class="px-2 bg-white text-gray-500">or</span>
             </div>
           </div>
+          <% end %>
 
           <.simple_form
             for={@form}
@@ -116,6 +119,7 @@ defmodule SequinWeb.UserLoginLive do
                 Sign up
               </.button>
             </p>
+          <% not @account_self_signup? and @self_hosted -> %>
         <% end %>
       </div>
     </div>
