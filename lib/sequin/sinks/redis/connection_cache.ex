@@ -80,6 +80,21 @@ defmodule Sequin.Sinks.Redis.ConnectionCache do
       Map.put(cache, sink.connection_id, entry)
     end
 
+    @doc """
+    Finds and removes a connection from the cache by its pid.
+    Returns {connection_id, new_cache} if found, or {nil, cache} if not found.
+    """
+    @spec find_and_remove_by_pid(t(), pid()) :: {binary() | nil, t()}
+    def find_and_remove_by_pid(cache, pid) do
+      case Enum.find(cache, fn {_id, entry} -> entry.conn == pid end) do
+        {connection_id, _entry} ->
+          {connection_id, Map.delete(cache, connection_id)}
+
+        nil ->
+          {nil, cache}
+      end
+    end
+
     defp options_hash(%RedisStreamSink{} = sink) do
       :erlang.phash2(RedisStreamSink.redis_url(sink, obscure_password: false))
     end
@@ -237,9 +252,23 @@ defmodule Sequin.Sinks.Redis.ConnectionCache do
   end
 
   @impl GenServer
-  def handle_info({:EXIT, _pid, :normal}, %State{} = state) do
-    # TODO: Do we need to handle connection going down? We're the ~only ones that can invalidate it?
-    {:noreply, state}
+  def handle_info({:EXIT, pid, reason}, %State{} = state) do
+    # Handle connection exits - find and remove the dead connection from cache
+    case Cache.find_and_remove_by_pid(state.cache, pid) do
+      {nil, _cache} ->
+        # Connection not in our cache, ignore
+        {:noreply, state}
+
+      {connection_id, new_cache} ->
+        if reason != :normal do
+          Logger.warning("Cached Redis connection exited unexpectedly, removed from cache",
+            connection_id: connection_id,
+            reason: inspect(reason)
+          )
+        end
+
+        {:noreply, %{state | cache: new_cache}}
+    end
   end
 
   @impl GenServer

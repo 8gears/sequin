@@ -72,8 +72,6 @@ defmodule Sequin.Application do
   end
 
   defp base_children do
-    Sequin.Redis.connect_cluster()
-
     [
       Sequin.Repo,
       Sequin.Vault,
@@ -84,6 +82,9 @@ defmodule Sequin.Application do
       Sequin.Cache.child_spec(),
       {Oban, Application.fetch_env!(:sequin, Oban)},
       {Registry, keys: :duplicate, name: TestMessages.registry()},
+      # Redis Registry and Supervisor - must come before components that use Redis
+      {Registry, keys: :unique, name: Sequin.Redis.Registry},
+      Sequin.Redis,
       Sequin.Functions.MiniElixir,
       Sequin.Databases.ConnectionCache,
       Sequin.Sinks.Redis.ConnectionCache,
